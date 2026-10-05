@@ -1,0 +1,92 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>BoostPanel – TikTok SMM Panel</title>
+<style>
+:root{--bg:#f4f5f9;--cd:#fff;--tx:#12141c;--mu:#667085;--bd:#e3e6ee;--in:#f0f2f7;--ac:#fe2c55;--ok:#12a150;--wr:#d98a00;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d0f15;--cd:#161923;--tx:#eef0f6;--mu:#9aa1b2;--bd:#262a37;--in:#1d212d}}
+:root[data-theme="dark"]{--bg:#0d0f15;--cd:#161923;--tx:#eef0f6;--mu:#9aa1b2;--bd:#262a37;--in:#1d212d}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;background:var(--cd);border-bottom:1px solid var(--bd);flex-wrap:wrap}
+nav{display:flex;gap:6px;padding:10px 16px;overflow-x:auto}
+nav button,.tabs button{background:var(--in);color:var(--tx);border:0;padding:8px 14px;border-radius:999px;cursor:pointer;white-space:nowrap}
+nav button.on,.tabs button.on{background:var(--ac);color:#fff}
+main{max-width:980px;margin:0 auto;padding:8px 16px 40px}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:18px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px}
+.stat b{display:block;font-size:26px;margin-top:4px}
+.mu{color:var(--mu)}.sm{font-size:13px}
+input,select{width:100%;padding:10px 12px;margin:4px 0 12px;background:var(--in);color:var(--tx);border:1px solid var(--bd);border-radius:8px;font:inherit}
+label{font-size:13px;color:var(--mu)}
+.btn{background:var(--ac);color:#fff;border:0;padding:10px 18px;border-radius:8px;cursor:pointer;font:inherit;font-weight:600}
+.btn.s{padding:6px 10px;font-size:13px}.btn.g{background:var(--ok)}.btn.o{background:var(--in);color:var(--tx)}
+.ghost{background:none;border:1px solid var(--bd);color:var(--tx);padding:6px 10px;border-radius:8px;cursor:pointer;margin-left:6px}
+.note{background:var(--in);border-left:3px solid var(--ac);padding:10px 12px;border-radius:6px;margin:10px 0}
+.auth{max-width:380px;margin:8vh auto;padding:24px}.tabs{display:flex;gap:6px;margin:14px 0}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:8px;border-bottom:1px solid var(--bd);white-space:nowrap}td input,td select{margin:0;min-width:80px}
+.b{padding:2px 8px;border-radius:999px;font-size:12px;background:var(--in)}.b.Completed,.b.Approved{color:var(--ok)}.b.Pending,.b.In{color:var(--wr)}.b.Canceled,.b.Rejected{color:var(--ac)}
+h1,h2{margin:0 0 8px}h2{font-size:18px}
+</style></head><body><div id="app"></div>
+<script>
+const K='smm_db_v2',SK='smm_sess',ST=['Pending','In progress','Completed','Partial','Canceled'];
+let mem={};const st={get(k){try{return localStorage.getItem(k)}catch(e){return mem[k]||null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){mem[k]=v}}};
+const sv=(id,c,n,p,m,mx)=>({id,cat:c,name:n,prov:p,mk:m,min:mn(mx),max:mx});function mn(x){return x>100000?100:50}
+const seed=()=>({n:10,users:[{id:1,name:'Admin',email:'admin@panel.com',pass:'admin123',bal:0,role:'admin',ban:0}],
+services:[sv(1,'TikTok Views','TikTok Views – Fast',4,25,1000000),sv(2,'TikTok Views','TikTok Views – Premium',8,25,500000),sv(3,'TikTok Likes','TikTok Likes – Mixed',40,25,100000),sv(4,'TikTok Followers','TikTok Followers – Standard',400,25,50000)],orders:[],pay:[]});
+let db=null;try{db=JSON.parse(st.get(K))}catch(e){}if(!db)db=seed();
+const save=()=>st.set(K,JSON.stringify(db));
+let me=null,page='dash',tab='login',msg='',oc='',os=0,th='';
+try{me=db.users.find(u=>u.id==+st.get(SK))||null;if(me)page=me.role=='admin'?'a-users':'dash'}catch(e){}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=n=>'Rs '+Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
+const v=id=>document.getElementById(id).value;
+const rate=s=>s.prov*(1+s.mk/100);
+const sn=id=>(db.services.find(s=>s.id==id)||{name:'?'}).name;
+const un=id=>(db.users.find(u=>u.id==id)||{email:'?'}).email;
+const badge=s=>`<span class="b ${s.split(' ')[0]}">${s}</span>`;
+function R(){document.getElementById('app').innerHTML=me?shell():authv()}
+function go(p){page=p;msg='';R()}function flash(m){msg=m;R()}
+function theme(){th=th=='dark'?'light':'dark';document.documentElement.dataset.theme=th}
+function authv(){return `<div class="card auth"><h1>⚡ BoostPanel</h1><p class="mu">TikTok growth, one order at a time.</p>
+<div class="tabs">${['login','signup','forgot'].map(x=>`<button class="${tab==x?'on':''}" onclick="tab='${x}';msg='';R()">${{login:'Login',signup:'Sign up',forgot:'Recovery'}[x]}</button>`).join('')}</div>
+${msg?`<div class="note">${msg}</div>`:''}${tab=='signup'?'<input id="n" placeholder="Full name">':''}<input id="e" type="email" placeholder="Email"><input id="p" type="password" placeholder="${tab=='forgot'?'New password':'Password'}">
+<button class="btn" style="width:100%" onclick="doAuth()">${{login:'Login',signup:'Create account',forgot:'Reset password'}[tab]}</button>
+<p class="mu sm">Demo admin: admin@panel.com / admin123</p></div>`}
+function doAuth(){const e=v('e').trim().toLowerCase(),p=v('p'),n=tab=='signup'?v('n'):'';if(!e||!p)return flash('Enter your email and password.');
+const u=db.users.find(x=>x.email==e);
+if(tab=='signup'){if(u)return flash('This email is already registered.');if(p.length<6)return flash('Use at least 6 characters for the password.');
+const nu={id:db.n++,name:n||e.split('@')[0],email:e,pass:p,bal:0,role:'user',ban:0};db.users.push(nu);save();return login(nu)}
+if(tab=='forgot'){if(!u)return flash('No account found with that email.');u.pass=p;save();tab='login';return flash('Password updated. You can log in now.')}
+if(!u||u.pass!=p)return flash('Wrong email or password.');if(u.ban)return flash('This account is suspended.');login(u)}
+function login(u){me=u;st.set(SK,u.id);page=u.role=='admin'?'a-users':'dash';msg='';R()}
+function logout(){me=null;st.set(SK,'');tab='login';msg='';R()}
+function shell(){const a=me.role=='admin';const nav=a?[['a-users','Users'],['a-services','Services'],['a-orders','Orders'],['a-pay','Payments']]:[['dash','Dashboard'],['order','New order'],['orders','My orders'],['funds','Add funds']];
+return `<header><b>⚡ BoostPanel</b><span class="mu sm">${esc(me.name)}${a?' (admin)':' – '+fmt(me.bal)}</span><span><button class="ghost" onclick="theme()">Theme</button><button class="ghost" onclick="logout()">Logout</button></span></header>
+<nav>${nav.map(([k,l])=>`<button class="${page==k?'on':''}" onclick="go('${k}')">${l}</button>`).join('')}</nav><main>${msg?`<div class="note">${msg}</div>`:''}${V[page]()}</main>`}
+const mine=()=>db.orders.filter(o=>o.uid==me.id);
+const V={
+dash(){const o=mine(),act=o.filter(x=>x.s=='Pending'||x.s=='In progress').length,sp=o.filter(x=>x.s!='Canceled').reduce((a,x)=>a+x.ch,0);
+return `<div class="grid"><div class="card stat"><span class="mu">Balance</span><b>${fmt(me.bal)}</b></div><div class="card stat"><span class="mu">Active orders</span><b>${act}</b></div><div class="card stat"><span class="mu">Total spent</span><b>${fmt(sp)}</b></div></div>
+<div class="card"><h2>Get started</h2><p class="mu">Add funds, then place your first order for views, likes or followers.</p><button class="btn" onclick="go('funds')">Add funds</button> <button class="btn o" onclick="go('order')">New order</button></div>`},
+order(){const cats=[...new Set(db.services.map(s=>s.cat))];if(!oc)oc=cats[0];const ss=db.services.filter(s=>s.cat==oc);if(!ss.find(s=>s.id==os))os=ss[0]&&ss[0].id;const s=db.services.find(x=>x.id==os);
+return `<div class="card"><h2>New order</h2><label>Category</label><select onchange="oc=this.value;R()">${cats.map(c=>`<option ${c==oc?'selected':''}>${esc(c)}</option>`).join('')}</select>
+<label>Service</label><select onchange="os=+this.value;R()">${ss.map(x=>`<option value="${x.id}" ${x.id==os?'selected':''}>${esc(x.name)} – ${fmt(rate(x))}/1000</option>`).join('')}</select>
+<label>Video link or username</label><input id="l" placeholder="https://www.tiktok.com/@user/video/…"><label>Quantity (min ${s?s.min:0}, max ${s?s.max:0})</label><input id="q" type="number" oninput="pv()">
+<p>Charge: <b id="pc">${fmt(0)}</b></p><button class="btn" onclick="place()">Place order</button></div>`},
+orders(){const o=mine().slice().reverse();return `<div class="card tw"><h2>My orders</h2>${o.length?`<table><tr><th>ID</th><th>Service</th><th>Link</th><th>Qty</th><th>Charge</th><th>Status</th></tr>${o.map(x=>`<tr><td>#${x.id}</td><td>${esc(sn(x.sid))}</td><td>${esc(x.l)}</td><td>${x.q}</td><td>${fmt(x.ch)}</td><td>${badge(x.s)}</td></tr>`).join('')}</table>`:'<p class="mu">No orders yet. Place your first one from New order.</p>'}</div>`},
+funds(){const p=db.pay.filter(x=>x.uid==me.id).reverse();return `<div class="card"><h2>Add funds</h2><p class="mu sm">Send money to the account shown by the admin, then submit the transaction ID. Your balance updates after approval.</p>
+<label>Method</label><select id="m"><option>JazzCash</option><option>EasyPaisa</option><option>Bank Transfer</option></select><label>Amount (Rs)</label><input id="a" type="number"><label>Transaction ID</label><input id="r"><button class="btn" onclick="reqPay()">Submit payment</button></div>
+<div class="card tw"><h2>Payment requests</h2>${p.length?`<table><tr><th>Method</th><th>Amount</th><th>Txn ID</th><th>Status</th></tr>${p.map(x=>`<tr><td>${x.m}</td><td>${fmt(x.a)}</td><td>${esc(x.r)}</td><td>${badge(x.s)}</td></tr>`).join('')}</table>`:'<p class="mu">No requests yet.</p>'}</div>`},
+'a-users'(){return `<div class="card tw"><h2>Users</h2><table><tr><th>User</th><th>Balance</th><th>Adjust (Rs)</th><th></th></tr>${db.users.filter(u=>u.role!='admin').map(u=>`<tr><td>${esc(u.name)}<br><span class="mu sm">${esc(u.email)}</span></td><td>${fmt(u.bal)}</td><td><input id="b${u.id}" type="number" placeholder="Amount"></td><td><button class="btn s g" onclick="adj(${u.id},1)">Add</button> <button class="btn s o" onclick="adj(${u.id},-1)">Deduct</button> <button class="btn s o" onclick="ban(${u.id})">${u.ban?'Unban':'Ban'}</button></td></tr>`).join('')||'<tr><td class="mu">No users have signed up yet.</td></tr>'}</table></div>`},
+'a-services'(){return `<div class="card tw"><h2>Services and rates</h2><p class="mu sm">Sell rate = provider rate + markup. Prices are per 1000.</p><table><tr><th>Service</th><th>Provider rate</th><th>Markup %</th><th>Sell rate</th><th></th></tr>${db.services.map(s=>`<tr><td>${esc(s.name)}</td><td><input id="p${s.id}" type="number" value="${s.prov}"></td><td><input id="k${s.id}" type="number" value="${s.mk}"></td><td>${fmt(rate(s))}</td><td><button class="btn s" onclick="svc(${s.id})">Save</button></td></tr>`).join('')}</table></div>`},
+'a-orders'(){return `<div class="card tw"><h2>All orders</h2>${db.orders.length?`<table><tr><th>ID</th><th>User</th><th>Service</th><th>Link</th><th>Qty</th><th>Charge</th><th>Status</th></tr>${db.orders.slice().reverse().map(o=>`<tr><td>#${o.id}</td><td>${esc(un(o.uid))}</td><td>${esc(sn(o.sid))}</td><td>${esc(o.l)}</td><td>${o.q}</td><td>${fmt(o.ch)}</td><td><select onchange="setS(${o.id},this.value)">${ST.map(x=>`<option ${x==o.s?'selected':''}>${x}</option>`).join('')}</select></td></tr>`).join('')}</table><p class="mu sm">Canceled orders are refunded automatically.</p>`:'<p class="mu">No orders yet.</p>'}</div>`},
+'a-pay'(){return `<div class="card tw"><h2>Payment approvals</h2>${db.pay.length?`<table><tr><th>User</th><th>Method</th><th>Amount</th><th>Txn ID</th><th>Status</th><th></th></tr>${db.pay.slice().reverse().map(x=>`<tr><td>${esc(un(x.uid))}</td><td>${x.m}</td><td>${fmt(x.a)}</td><td>${esc(x.r)}</td><td>${badge(x.s)}</td><td>${x.s=='Pending'?`<button class="btn s g" onclick="pay(${x.id},1)">Approve</button> <button class="btn s o" onclick="pay(${x.id},0)">Reject</button>`:''}</td></tr>`).join('')}</table>`:'<p class="mu">No payment requests yet.</p>'}</div>`}};
+function pv(){const s=db.services.find(x=>x.id==os);document.getElementById('pc').textContent=fmt((+v('q')||0)*rate(s)/1000)}
+function place(){const s=db.services.find(x=>x.id==os),l=v('l').trim(),q=+v('q');if(!l)return flash('Enter the video link or username.');
+if(!q||q<s.min||q>s.max)return flash(`Quantity must be between ${s.min} and ${s.max}.`);const ch=q*rate(s)/1000;
+if(ch>me.bal)return flash('Not enough balance. Add funds first.');me.bal-=ch;db.orders.push({id:db.n++,uid:me.id,sid:s.id,l,q,ch,s:'Pending',rf:0});save();page='orders';flash('Order placed. Status: Pending.')}
+function reqPay(){const a=+v('a'),r=v('r').trim();if(!a||a<=0||!r)return flash('Enter the amount and transaction ID.');db.pay.push({id:db.n++,uid:me.id,m:v('m'),a,r,s:'Pending'});save();flash('Payment submitted. Waiting for admin approval.')}
+function adj(id,sg){const a=+v('b'+id);if(!a)return flash('Enter an amount.');const u=db.users.find(x=>x.id==id);u.bal=Math.max(0,u.bal+sg*a);save();flash('Balance updated.')}
+function ban(id){const u=db.users.find(x=>x.id==id);u.ban=u.ban?0:1;save();R()}
+function svc(id){const s=db.services.find(x=>x.id==id);s.prov=+v('p'+id)||0;s.mk=+v('k'+id)||0;save();flash('Service saved.')}
+function setS(id,x){const o=db.orders.find(y=>y.id==id);o.s=x;if(x=='Canceled'&&!o.rf){o.rf=1;db.users.find(u=>u.id==o.uid).bal+=o.ch}save();R()}
+function pay(id,ok){const p=db.pay.find(x=>x.id==id);p.s=ok?'Approved':'Rejected';if(ok)db.users.find(u=>u.id==p.uid).bal+=p.a;save();R()}
+R();
+</script></body></html>
